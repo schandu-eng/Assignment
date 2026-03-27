@@ -1,36 +1,41 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Composited video player
 
-## Getting Started
+Next.js app: **Three.js** preview (background + padded, rounded video), **word-synced transcript** with skip/select, **mock APIs** for transcript and media URLs.
 
-First, run the development server:
+## Run
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Deploy (e.g. Vercel)
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+npm run build
+```
 
-## Learn More
+Commit `public/video.mp4`, `public/background.jpg`, and `public/data/transcript.json` (or point [`app/api/media-metadata/route.ts`](app/api/media-metadata/route.ts) at hosted URLs). Large binaries may need [Git LFS](https://git-lfs.com) or external storage.
 
-To learn more about Next.js, take a look at the following resources:
+## Assets
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+| Path | Role |
+|------|------|
+| `public/video.mp4` | Main video |
+| `public/background.jpg` | Backplate in the scene |
+| `public/data/transcript.json` | Word-level transcript (served via API) |
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## APIs
 
-## Deploy on Vercel
+- `GET /api/transcript` → `{ transcript: { text, words[] } }`
+- `GET /api/media-metadata` → `{ videoUrl, backgroundUrl }`
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Stack (short)
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- **Compositor:** `@react-three/fiber` + `three` — background plane, shader-rounded video quad, shared `<video>` element.
+- **Transcript:** RAF + ref-based active word (minimal React churn); Redux Toolkit for padding, radius, skips.
+- **Playback:** HTML5 video + bar (seek, ±10s, 1×–2× speed).
+
+**Smaller MP4 for dev:** e.g. `ffmpeg -i in.mp4 -vf "scale='min(1920,iw)':-2" -c:v libx264 -crf 23 -c:a aac -movflags +faststart -y public/video.mp4`
